@@ -1,4 +1,5 @@
 import { parse, formatISO, startOfDay, endOfDay, isValid } from "date-fns";
+import es from 'date-fns/locale/es'
 import Appointment from "../models/Appointment.js";
 import { validateObjectId, handleNotFoundError, formatDate } from "../utils/index.js";
 import { sendEmailNewAppointment, sendEmailUpdateAppointment, sendEmailCancelledAppointment } from "../emails/appointmentEmailService.js";
@@ -27,7 +28,9 @@ const createAppointment = async (req, res) => {
 const getAppointmentByDate = async (req, res) => {
   const { date } = req.query;
 
-  const newDate = parse(date, "dd/MM/yyyy", new Date());
+  const newDate = parse(date, "dd/MM/yyyy", new Date(),{
+    locale: es
+  });
 
   if (!isValid(newDate)) {
     const error = new Error("Fecha no válida");
