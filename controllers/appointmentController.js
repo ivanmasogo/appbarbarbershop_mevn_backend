@@ -1,5 +1,5 @@
 import { parse, formatISO, startOfDay, endOfDay, isValid } from "date-fns";
-import es from 'date-fns/locale/es'
+import { fromZonedTime  } from "date-fns-tz";
 import Appointment from "../models/Appointment.js";
 import { validateObjectId, handleNotFoundError, formatDate } from "../utils/index.js";
 import { sendEmailNewAppointment, sendEmailUpdateAppointment, sendEmailCancelledAppointment } from "../emails/appointmentEmailService.js";
@@ -28,21 +28,25 @@ const createAppointment = async (req, res) => {
 const getAppointmentByDate = async (req, res) => {
   const { date } = req.query;
 
-  const newDate = parse(date, "dd/MM/yyyy", new Date(),{
-    locale: es
-  });
+  const timeZone = 'Europe/Madrid';
 
-  if (!isValid(newDate)) {
+  const localDate = parse(date, 'dd/MM/yyyy', new Date());
+
+  if (!isValid(localDate)) {
     const error = new Error("Fecha no válida");
     return res.status(400).json({ msg: error.message });
   }
 
-  const isoDate = formatISO(newDate);
+  const startDateUtc = fromZonedTime(startOfDay(localDate), timeZone);
+  const endDateUtc = fromZonedTime(endOfDay(localDate), timeZone);
+
+  const startDateIso = formatISO(startDateUtc);
+  const endDateIso = formatISO(endDateUtc);
 
   const appointments = await Appointment.find({
     date: {
-      $gte: startOfDay(new Date(isoDate)),
-      $lte: endOfDay(new Date(isoDate)),
+      $gte: startDateIso,
+      $lte: endDateIso,
     },
   }).select("time");
 
